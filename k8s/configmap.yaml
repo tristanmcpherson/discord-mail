@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: discord-mail-config
 data:
-  SMTP_PORT: "25"
+  SMTP_PORT: "2525"
   SMTP_HOST: "0.0.0.0"
   # Note: DISCORD_WEBHOOK_URL should be set in the Secret, not here 

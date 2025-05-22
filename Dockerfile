@@ -17,7 +17,7 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Expose SMTP port
-EXPOSE 25
+EXPOSE 2525
 
 # Start the application
 CMD ["node", "src/index.js"] 
