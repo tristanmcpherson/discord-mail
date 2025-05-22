@@ -39,6 +39,7 @@ const server = new SMTPServer({
         stream.on('end', async () => {
             try {
                 const parsed = await simpleParser(mailData);
+                console.log(`Received email from ${parsed.from.text} to ${parsed.to.text}`);
                 
                 // Apply filtering rules
                 if (shouldForwardEmail(parsed)) {
@@ -46,6 +47,7 @@ const server = new SMTPServer({
                     const steamCode = extractSteamCode(parsed.text || parsed.html);
                     
                     if (steamCode) {
+                        console.log(`Found Steam Guard code: ${steamCode}`);
                         // Format message for Discord
                         const discordMessage = formatSteamCodeForDiscord(steamCode, parsed);
                         
@@ -55,7 +57,12 @@ const server = new SMTPServer({
                             username: 'Steam Guard',
                             avatarURL: 'https://store.steampowered.com/favicon.ico'
                         });
+                        console.log('Successfully sent code to Discord');
+                    } else {
+                        console.log('No Steam Guard code found in email');
                     }
+                } else {
+                    console.log('Email filtered out by rules');
                 }
 
                 callback();
@@ -83,17 +90,20 @@ function shouldForwardEmail(email) {
     // Check domain
     const fromDomain = email.from.value[0].address.split('@')[1];
     if (!filterRules.allowedDomains.includes(fromDomain)) {
+        console.log(`Email from domain ${fromDomain} not in allowed list`);
         return false;
     }
 
     // Check for blocked keywords
     const subject = email.subject.toLowerCase();
     if (filterRules.blockedKeywords.some(keyword => subject.includes(keyword))) {
+        console.log(`Email contains blocked keyword in subject: ${subject}`);
         return false;
     }
 
     // Check size
     if (email.size > filterRules.maxSize) {
+        console.log(`Email size ${email.size} exceeds maximum allowed size`);
         return false;
     }
 
