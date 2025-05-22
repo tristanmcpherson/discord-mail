@@ -1,0 +1,107 @@
+require('dotenv').config();
+const { SMTPServer } = require('smtp-server');
+const { WebhookClient } = require('discord.js');
+const { simpleParser } = require('mailparser');
+
+// Initialize Discord webhook
+const webhookClient = new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL });
+
+// Email filtering rules
+const filterRules = {
+    // Add your filtering rules here
+    allowedDomains: ['steampowered.com'],
+    blockedKeywords: ['spam', 'unwanted'],
+    maxSize: 10 * 1024 * 1024, // 10MB
+};
+
+// Create SMTP server
+const server = new SMTPServer({
+    secure: false, // Set to true in production with proper SSL/TLS
+    authOptional: true, // Set to false in production
+    onData(stream, session, callback) {
+        let mailData = '';
+        stream.on('data', (chunk) => {
+            mailData += chunk;
+        });
+
+        stream.on('end', async () => {
+            try {
+                const parsed = await simpleParser(mailData);
+                
+                // Apply filtering rules
+                if (shouldForwardEmail(parsed)) {
+                    // Extract Steam Guard code
+                    const steamCode = extractSteamCode(parsed.text || parsed.html);
+                    
+                    if (steamCode) {
+                        // Format message for Discord
+                        const discordMessage = formatSteamCodeForDiscord(steamCode, parsed);
+                        
+                        // Send to Discord
+                        await webhookClient.send({
+                            content: discordMessage,
+                            username: 'Steam Guard',
+                            avatarURL: 'https://store.steampowered.com/favicon.ico'
+                        });
+                    }
+                }
+
+                callback();
+            } catch (err) {
+                console.error('Error processing email:', err);
+                callback(new Error('Error processing email'));
+            }
+        });
+    }
+});
+
+// Extract Steam Guard code from email content
+function extractSteamCode(content) {
+    // Convert HTML to text if needed
+    const textContent = content.replace(/<[^>]*>/g, '');
+    
+    // Look for the Steam Guard code pattern
+    // The code is typically 5 uppercase letters at the end of the message
+    const match = textContent.match(/([A-Z]{5})$/m);
+    return match ? match[1] : null;
+}
+
+// Email filtering function
+function shouldForwardEmail(email) {
+    // Check domain
+    const fromDomain = email.from.value[0].address.split('@')[1];
+    if (!filterRules.allowedDomains.includes(fromDomain)) {
+        return false;
+    }
+
+    // Check for blocked keywords
+    const subject = email.subject.toLowerCase();
+    if (filterRules.blockedKeywords.some(keyword => subject.includes(keyword))) {
+        return false;
+    }
+
+    // Check size
+    if (email.size > filterRules.maxSize) {
+        return false;
+    }
+
+    return true;
+}
+
+// Format Steam Guard code for Discord
+function formatSteamCodeForDiscord(code, email) {
+    return `🔐 Steam Guard Code
+Code: \`${code}\`
+Time: ${email.date.toLocaleString()}
+
+From: ${email.from.text}
+To: ${email.to.text}`;
+}
+
+// Start server
+const port = process.env.SMTP_PORT || 25;
+const host = process.env.SMTP_HOST || 'localhost';
+
+server.listen(port, host, () => {
+    console.log(`SMTP server running on ${host}:${port}`);
+}); 

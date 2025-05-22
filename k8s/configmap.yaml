@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: discord-mail-config
+data:
+  SMTP_PORT: "25"
+  SMTP_HOST: "0.0.0.0"
+  # Note: DISCORD_WEBHOOK_URL should be set in the Secret, not here 

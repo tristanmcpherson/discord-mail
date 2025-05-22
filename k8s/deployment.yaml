@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-mail
+  labels:
+    app: discord-mail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discord-mail
+  template:
+    metadata:
+      labels:
+        app: discord-mail
+    spec:
+      containers:
+      - name: discord-mail
+        image: discord-mail:latest  # Replace with your container registry path
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 25
+        envFrom:
+        - configMapRef:
+            name: discord-mail-config
+        - secretRef:
+            name: discord-mail-secret
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          tcpSocket:
+            port: 25
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 25
+          initialDelaySeconds: 15
+          periodSeconds: 20 

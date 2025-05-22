@@ -1,0 +1,19 @@
+{
+  "name": "discord-mail",
+  "version": "1.0.0",
+  "description": "Mail server that forwards filtered emails to Discord",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "smtp-server": "^3.13.0",
+    "discord.js": "^14.14.1",
+    "nodemailer": "^6.9.9",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+} 
