@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: discord-mail
-        image: discord-mail:latest  # Replace with your container registry path
+        image: '${REGISTRY_URL}:${IMAGE_TAG}'
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 25
