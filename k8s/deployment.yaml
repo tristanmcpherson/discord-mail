@@ -21,7 +21,7 @@ spec:
         image: '${REGISTRY_URL}:${IMAGE_TAG}'
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 25
+        - containerPort: 2525
         envFrom:
         - configMapRef:
             name: discord-mail-config
@@ -35,12 +35,18 @@ spec:
             memory: "256Mi"
             cpu: "200m"
         readinessProbe:
-          tcpSocket:
-            port: 25
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'echo "QUIT" | nc localhost 2525 | grep -q "221"'
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
-          tcpSocket:
-            port: 25
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'echo "QUIT" | nc localhost 2525 | grep -q "221"'
           initialDelaySeconds: 15
           periodSeconds: 20 

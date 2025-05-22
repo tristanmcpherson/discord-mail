@@ -9,7 +9,7 @@ const webhookClient = new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL }
 // Email filtering rules
 const filterRules = {
     // Add your filtering rules here
-    allowedDomains: ['steampowered.com', 'shredder8910@gmail.com'],
+    allowedDomains: ['steampowered.com'],
     blockedKeywords: ['spam', 'unwanted'],
     maxSize: 10 * 1024 * 1024, // 10MB
 };
@@ -18,6 +18,18 @@ const filterRules = {
 const server = new SMTPServer({
     secure: false, // Set to true in production with proper SSL/TLS
     authOptional: true, // Set to false in production
+    onConnect(session, callback) {
+        // Log connection for debugging
+        console.log(`New connection from ${session.remoteAddress}`);
+        callback();
+    },
+    onAuth(auth, session, callback) {
+        // For health checks, we'll accept any auth
+        if (auth.username === 'healthcheck') {
+            return callback(null, { user: 'healthcheck' });
+        }
+        callback(new Error('Invalid authentication'));
+    },
     onData(stream, session, callback) {
         let mailData = '';
         stream.on('data', (chunk) => {
@@ -99,8 +111,8 @@ To: ${email.to.text}`;
 }
 
 // Start server
-const port = process.env.SMTP_PORT || 25;
-const host = process.env.SMTP_HOST || 'localhost';
+const port = process.env.SMTP_PORT || 2525;
+const host = process.env.SMTP_HOST || '0.0.0.0';
 
 server.listen(port, host, () => {
     console.log(`SMTP server running on ${host}:${port}`);
