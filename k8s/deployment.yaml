@@ -34,19 +34,4 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - 'echo "QUIT" | nc localhost 2525 | grep -q "221"'
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - 'echo "QUIT" | nc localhost 2525 | grep -q "221"'
-          initialDelaySeconds: 15
-          periodSeconds: 20 
+
