@@ -5,7 +5,7 @@ metadata:
   labels:
     app: discord-mail
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
   - port: 25
     targetPort: 2525
