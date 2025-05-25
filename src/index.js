@@ -9,7 +9,7 @@ const webhookClient = new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL }
 // Email filtering rules
 const filterRules = {
     // Add your filtering rules here
-    allowedDomains: ['steampowered.com'],
+    allowedDomains: ['steampowered.com', 'gmail.com'],
     blockedKeywords: ['spam', 'unwanted'],
     maxSize: 10 * 1024 * 1024, // 10MB
 };
