@@ -83,14 +83,7 @@ function extractSteamCode(content) {
     const match = content.match("Login Code\\n([0-9A-Z]{5})");
     if (match) return match[1];
 
-    // Fallback: look for 'code is:' or 'Steam Guard code is:'
-    const fallbackRegex = /code (?:is|contained in this email is)[^A-Z0-9]*([A-Z0-9]{5})/i;
-    const fallbackMatch = content.match(fallbackRegex);
-    if (fallbackMatch) return fallbackMatch[1];
-
-    // Fallback: just any 5 uppercase alphanumeric code
-    const genericMatch = content.match(/\b([A-Z0-9]{5})\b/);
-    return genericMatch ? genericMatch[1] : null;
+    return null;
 }
 
 // Email filtering function

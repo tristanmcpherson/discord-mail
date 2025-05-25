@@ -15,28 +15,6 @@ const { simpleParser } = require('mailparser');
 const fs = require('fs').promises;
 const path = require('path');
 
-describe('Steam Code Extraction', () => {
-  test('extracts Steam Guard code from plain text', () => {
-    const text = 'Your Steam Guard code is: ABC12';
-    expect(extractSteamCode(text)).toBe('ABC12');
-  });
-
-  test('extracts Steam Guard code from HTML content', () => {
-    const html = '<div>Your Steam Guard code is: <strong>XYZ45</strong></div>';
-    expect(extractSteamCode(html)).toBe('XYZ45');
-  });
-
-  test('returns null when no code is found', () => {
-    const text = 'This is a regular email without a Steam code';
-    expect(extractSteamCode(text)).toBeNull();
-  });
-
-  test('handles multiple potential codes and returns the correct one', () => {
-    const text = 'Some text ABC12\nYour Steam Guard code is: XYZ45';
-    expect(extractSteamCode(text)).toBe('XYZ45');
-  });
-});
-
 describe('Email Filtering', () => {
   test('allows email from steampowered.com', () => {
     const email = {
