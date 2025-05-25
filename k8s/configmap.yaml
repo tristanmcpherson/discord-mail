@@ -5,4 +5,6 @@ metadata:
 data:
   SMTP_PORT: "2525"
   SMTP_HOST: "0.0.0.0"
+  WEB_PORT: "3000"
+  BASE_URL: "https://mail.your-domain.com"  # Replace with your actual domain
   # Note: DISCORD_WEBHOOK_URL should be set in the Secret, not here 

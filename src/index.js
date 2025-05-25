@@ -2,9 +2,13 @@ require('dotenv').config();
 const { SMTPServer } = require('smtp-server');
 const { WebhookClient } = require('discord.js');
 const { simpleParser } = require('mailparser');
+const EmailStorage = require('./email-storage');
+const WebServer = require('./web-server');
 
 // Initialize Discord webhook
 const webhookClient = new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL });
+const emailStorage = new EmailStorage();
+const webServer = new WebServer(emailStorage);
 
 // Email filtering rules
 const filterRules = {
@@ -43,30 +47,36 @@ const server = new SMTPServer({
                 
                 // Apply filtering rules
                 if (shouldForwardEmail(parsed)) {
-                    // Extract Steam Guard code
-                    if (!parsed.text) {
-                        console.log('No text content found in email');
-                        return callback(new Error('No text content found'));
-                    }
+                    // Store the email
+                    const { emailId, authToken } = await emailStorage.storeEmail(parsed, {
+                        from: parsed.from?.text,
+                        subject: parsed.subject,
+                        date: parsed.date
+                    });
 
+                    // Create the viewing URL
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.WEB_PORT || 3000}`;
+                    const viewUrl = `${baseUrl}/view-email/${emailId}?token=${authToken}`;
+
+                    // Extract Steam Guard code
                     const steamCode = extractSteamCode(parsed.text);
                     
+                    // Format message for Discord
+                    let discordMessage = `New email from: ${parsed.from?.text}\nSubject: ${parsed.subject}`;
                     
                     if (steamCode) {
-                        console.log(`Found Steam Guard code: ${steamCode}`);
-                        // Format message for Discord
-                        const discordMessage = formatSteamCodeForDiscord(steamCode, parsed);
-                        
-                        // Send to Discord
-                        await webhookClient.send({
-                            content: discordMessage,
-                            username: 'Steam Guard',
-                            avatarURL: 'https://store.steampowered.com/favicon.ico'
-                        });
-                        console.log('Successfully sent code to Discord');
-                    } else {
-                        console.log('No Steam Guard code found in email');
+                        discordMessage += `\n\nSteam Guard Code: **${steamCode}**`;
                     }
+                    
+                    discordMessage += `\n\nView full email: ${viewUrl}`;
+                    
+                    // Send to Discord
+                    await webhookClient.send({
+                        content: discordMessage,
+                        username: 'Steam Guard',
+                        avatarURL: 'https://store.steampowered.com/favicon.ico'
+                    });
+                    console.log('Successfully sent code to Discord');
                 } else {
                     console.log('Email filtered out by rules');
                 }
@@ -79,21 +89,6 @@ const server = new SMTPServer({
         });
     }
 });
-
-// Extract Steam Guard code from email content
-function extractSteamCode(content) {
-    if (!content) return null;
-
-    // Look for 'Login Code' followed by a code (5 alphanumeric, usually uppercase)
-    // Handles possible whitespace and line breaks
-    const match = content.match("Login Code\s*\\n([0-9A-Z]{5})");
-    if (match) return match[1];
-
-    const match2 = content.match("\n([0-9A-Z]{5})");
-    if (match2) return match2[1];
-
-    return null;
-}
 
 // Email filtering function
 function shouldForwardEmail(email) {
@@ -120,26 +115,66 @@ function shouldForwardEmail(email) {
     return true;
 }
 
-// Format Steam Guard code for Discord
-function formatSteamCodeForDiscord(code, email) {
-    return `🔐 Steam Guard Code
-Code: \`${code}\`
-Time: ${email.date.toLocaleString()}
-
-From: ${email.from.text}
-To: ${email.to.text}`;
+// Extract Steam Guard code from email text
+function extractSteamCode(text) {
+    if (!text) return null;
+    
+    // Look for Steam Guard code pattern
+    const codeMatch = text.match(/Steam Guard code:?\s*([A-Z0-9]{5})/i);
+    if (codeMatch) {
+        return codeMatch[1];
+    }
+    
+    return null;
 }
 
-// Start server
-const port = process.env.SMTP_PORT || 2525;
-const host = process.env.SMTP_HOST || '0.0.0.0';
+// Initialize and start servers
+async function startServers() {
+    try {
+        // Initialize email storage
+        await emailStorage.initialize();
+        console.log('Email storage initialized');
 
-server.listen(port, host, () => {
-    console.log(`SMTP server running on ${host}:${port}`);
+        // Start web server
+        await webServer.start();
+        console.log('Web server started');
+
+        // Start SMTP server
+        const smtpPort = process.env.SMTP_PORT || 2525;
+        const smtpHost = process.env.SMTP_HOST || '0.0.0.0';
+        server.listen(smtpPort, smtpHost, () => {
+            console.log(`SMTP server running on ${smtpHost}:${smtpPort}`);
+        });
+    } catch (error) {
+        console.error('Failed to start servers:', error);
+        process.exit(1);
+    }
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('Received SIGTERM signal');
+    await webServer.stop();
+    server.close(() => {
+        console.log('Servers stopped');
+        process.exit(0);
+    });
 });
+
+process.on('SIGINT', async () => {
+    console.log('Received SIGINT signal');
+    await webServer.stop();
+    server.close(() => {
+        console.log('Servers stopped');
+        process.exit(0);
+    });
+});
+
+// Start the servers
+startServers();
 
 // Export functions for testing
 module.exports = {
     extractSteamCode,
     shouldForwardEmail
-}; 
+};

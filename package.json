@@ -10,13 +10,17 @@
   },
   "dependencies": {
     "discord.js": "^14.14.1",
+    "diskusage": "^1.2.0",
     "dotenv": "^16.4.1",
+    "express": "^4.18.2",
     "mailparser": "^3.6.5",
     "nodemailer": "^6.9.9",
-    "smtp-server": "^3.13.0"
+    "smtp-server": "^3.13.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "supertest": "^6.3.4"
   }
 }

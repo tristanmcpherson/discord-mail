@@ -11,5 +11,9 @@ spec:
     targetPort: 2525
     protocol: TCP
     name: smtp
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
   selector:
     app: discord-mail 

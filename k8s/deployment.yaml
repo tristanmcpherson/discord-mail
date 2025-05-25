@@ -27,6 +27,14 @@ spec:
             name: discord-mail-config
         - secretRef:
             name: discord-mail-secret
+        env:
+        - name: WEB_PORT
+          value: "3000"
+        - name: BASE_URL
+          value: "https://mail.raegous.dev"
+        volumeMounts:
+        - name: email-storage
+          mountPath: /data
         resources:
           requests:
             memory: "128Mi"
@@ -34,4 +42,7 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-
+      volumes:
+      - name: email-storage
+        persistentVolumeClaim:
+          claimName: discord-mail-pvc
