@@ -44,7 +44,7 @@ const server = new SMTPServer({
                 // Apply filtering rules
                 if (shouldForwardEmail(parsed)) {
                     // Extract Steam Guard code
-                    const steamCode = extractSteamCode(parsed.text || parsed.html);
+                    const steamCode = extractSteamCode(parsed.text);
                     
                     if (steamCode) {
                         console.log(`Found Steam Guard code: ${steamCode}`);
@@ -76,13 +76,21 @@ const server = new SMTPServer({
 
 // Extract Steam Guard code from email content
 function extractSteamCode(content) {
-    // Convert HTML to text if needed
-    const textContent = content.replace(/<[^>]*>/g, '');
-    
-    // Look for the Steam Guard code pattern
-    // The code is typically 5 uppercase letters at the end of the message
-    const match = textContent.match(/\t([A-Z0-9]{5})/m);
-    return match ? match[1] : null;
+    if (!content) return null;
+
+    // Look for 'Login Code' followed by a code (5 alphanumeric, usually uppercase)
+    // Handles possible whitespace and line breaks
+    const match = content.match("Login Code\\n([0-9A-Z]{5})");
+    if (match) return match[1];
+
+    // Fallback: look for 'code is:' or 'Steam Guard code is:'
+    const fallbackRegex = /code (?:is|contained in this email is)[^A-Z0-9]*([A-Z0-9]{5})/i;
+    const fallbackMatch = content.match(fallbackRegex);
+    if (fallbackMatch) return fallbackMatch[1];
+
+    // Fallback: just any 5 uppercase alphanumeric code
+    const genericMatch = content.match(/\b([A-Z0-9]{5})\b/);
+    return genericMatch ? genericMatch[1] : null;
 }
 
 // Email filtering function
@@ -126,4 +134,10 @@ const host = process.env.SMTP_HOST || '0.0.0.0';
 
 server.listen(port, host, () => {
     console.log(`SMTP server running on ${host}:${port}`);
-}); 
+});
+
+// Export functions for testing
+module.exports = {
+    extractSteamCode,
+    shouldForwardEmail
+}; 

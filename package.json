@@ -5,16 +5,18 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "jest"
   },
   "dependencies": {
-    "smtp-server": "^3.13.0",
     "discord.js": "^14.14.1",
-    "nodemailer": "^6.9.9",
     "dotenv": "^16.4.1",
-    "mailparser": "^3.6.5"
+    "mailparser": "^3.6.5",
+    "nodemailer": "^6.9.9",
+    "smtp-server": "^3.13.0"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.0.3"
   }
-} 
+}
