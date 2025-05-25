@@ -62,4 +62,13 @@ describe('EML File Processing', () => {
     expect(shouldForwardEmail(parsed)).toBe(true);
     expect(extractSteamCode(parsed.text)).toBe('2DWGV');
   });
+
+  test('processes real Steam Guard EML file 2', async () => {
+    const emlPath = path.join(__dirname, 'fixtures', 'steam-guard-2.eml');
+    const emlContent = await fs.readFile(emlPath, 'utf8');
+    const parsed = await simpleParser(emlContent);
+    
+    expect(shouldForwardEmail(parsed)).toBe(true);
+    expect(extractSteamCode(parsed.text)).toBe('2DWGV');
+  });
 }); 

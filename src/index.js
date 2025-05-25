@@ -89,6 +89,9 @@ function extractSteamCode(content) {
     const match = content.match("Login Code\s*\\n([0-9A-Z]{5})");
     if (match) return match[1];
 
+    const match2 = content.match("\n([0-9A-Z]{5})");
+    if (match2) return match2[1];
+
     return null;
 }
 
