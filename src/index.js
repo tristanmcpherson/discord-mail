@@ -44,7 +44,13 @@ const server = new SMTPServer({
                 // Apply filtering rules
                 if (shouldForwardEmail(parsed)) {
                     // Extract Steam Guard code
+                    if (!parsed.text) {
+                        console.log('No text content found in email');
+                        return callback(new Error('No text content found'));
+                    }
+
                     const steamCode = extractSteamCode(parsed.text);
+                    
                     
                     if (steamCode) {
                         console.log(`Found Steam Guard code: ${steamCode}`);
