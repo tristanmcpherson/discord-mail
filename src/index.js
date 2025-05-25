@@ -81,7 +81,7 @@ function extractSteamCode(content) {
     
     // Look for the Steam Guard code pattern
     // The code is typically 5 uppercase letters at the end of the message
-    const match = textContent.match(/([A-Z]{5})$/m);
+    const match = textContent.match(/\t([A-Z0-9]{5})/m);
     return match ? match[1] : null;
 }
 
