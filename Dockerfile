@@ -1,8 +1,12 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 # Install Python and build dependencies
-RUN apk add --no-cache python3 py3-pip
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
