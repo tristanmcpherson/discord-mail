@@ -29,18 +29,35 @@ const filterRules = {
 // Create SMTP server
 const server = new SMTPServer({
     secure: false, // Set to true in production with proper SSL/TLS
-    authOptional: true, // Set to false in production
+    authOptional: false, // Require authentication
+    hideSTARTTLS: false, // Allow STARTTLS
+    banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
     onConnect(session, callback) {
         // Log connection for debugging
         console.log(`New connection from ${session.remoteAddress}`);
         callback();
     },
     onAuth(auth, session, callback) {
-        // For health checks, we'll accept any auth
-        if (auth.username === 'healthcheck') {
-            return callback(null, { user: 'healthcheck' });
+        // Validate authentication
+        if (auth.username === process.env.SMTP_USER && auth.password === process.env.SMTP_PASSWORD) {
+            return callback(null, { user: auth.username });
         }
         callback(new Error('Invalid authentication'));
+    },
+    onMailFrom(address, session, callback) {
+        // Validate sender domain
+        const senderDomain = address.address.split('@')[1];
+        if (!filterRules.allowedDomains.includes(senderDomain)) {
+            return callback(new Error('Sender domain not allowed'));
+        }
+        callback();
+    },
+    onRcptTo(address, session, callback) {
+        // Validate recipient
+        if (!session.user) {
+            return callback(new Error('Authentication required'));
+        }
+        callback();
     },
     onData(stream, session, callback) {
         let mailData = '';

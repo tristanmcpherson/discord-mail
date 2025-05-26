@@ -31,6 +31,8 @@ spec:
         - secretRef:
             name: discord-mail-secret
         env:
+        - name: SMTP_BANNER
+          value: "ESMTP mail.raegous.dev"
         - name: WEB_PORT
           value: "3000"
         - name: BASE_URL
