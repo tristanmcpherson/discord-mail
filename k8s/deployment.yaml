@@ -37,9 +37,16 @@ spec:
           value: "3000"
         - name: BASE_URL
           value: "https://mail.raegous.dev"
+        - name: TLS_CERT_PATH
+          value: "/etc/tls/tls.crt"
+        - name: TLS_KEY_PATH
+          value: "/etc/tls/tls.key"
         volumeMounts:
         - name: email-storage
           mountPath: /data
+        - name: tls-certs
+          mountPath: /etc/tls
+          readOnly: true
         resources:
           requests:
             memory: "128Mi"
@@ -51,3 +58,6 @@ spec:
       - name: email-storage
         persistentVolumeClaim:
           claimName: discord-mail-pvc
+      - name: tls-certs
+        secret:
+          secretName: discord-mail-tls

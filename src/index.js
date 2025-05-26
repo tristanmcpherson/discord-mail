@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 require('dotenv').config({ path: '.env.local' });
 
@@ -28,10 +30,14 @@ const filterRules = {
 
 // Create SMTP server
 const server = new SMTPServer({
-    secure: false, // Set to true in production with proper SSL/TLS
+    secure: true, // Enable TLS
     authOptional: false, // Require authentication
     hideSTARTTLS: false, // Allow STARTTLS
     banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
+    tls: {
+        key: fs.readFileSync(process.env.TLS_KEY_PATH),
+        cert: fs.readFileSync(process.env.TLS_CERT_PATH)
+    },
     onConnect(session, callback) {
         // Log connection for debugging
         console.log(`New connection from ${session.remoteAddress}`);
@@ -53,10 +59,7 @@ const server = new SMTPServer({
         callback();
     },
     onRcptTo(address, session, callback) {
-        // Validate recipient
-        if (!session.user) {
-            return callback(new Error('Authentication required'));
-        }
+        // Allow any recipient since we're just receiving
         callback();
     },
     onData(stream, session, callback) {
