@@ -47,7 +47,6 @@ The following table lists the configurable parameters and their default values:
 | `ingress.className` | Ingress class name | `nginx` |
 | `ingress.hosts[0].host` | Hostname | `mail.raegous.com` |
 | `persistence.enabled` | Enable persistence | `true` |
-| `persistence.storageClass` | Storage class | `standard` |
 | `persistence.size` | Storage size | `5Gi` |
 | `resources.limits.cpu` | CPU limit | `500m` |
 | `resources.limits.memory` | Memory limit | `512Mi` |
