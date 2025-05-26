@@ -31,7 +31,7 @@ const filterRules = {
 // Create SMTP server
 const server = new SMTPServer({
     secure: true, // Enable TLS
-    authOptional: false, // Require authentication
+    authOptional: true, // Require authentication
     hideSTARTTLS: false, // Allow STARTTLS
     banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
     tls: {
@@ -42,13 +42,6 @@ const server = new SMTPServer({
         // Log connection for debugging
         console.log(`New connection from ${session.remoteAddress}`);
         callback();
-    },
-    onAuth(auth, session, callback) {
-        // Validate authentication
-        if (auth.username === process.env.SMTP_USER && auth.password === process.env.SMTP_PASSWORD) {
-            return callback(null, { user: auth.username });
-        }
-        callback(new Error('Invalid authentication'));
     },
     onMailFrom(address, session, callback) {
         // Validate sender domain

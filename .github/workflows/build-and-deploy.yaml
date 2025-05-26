@@ -69,5 +69,14 @@ jobs:
       - name: Apply k8s manifests
         run: |
           export KUBECONFIG=~/.kube/config
-          kubectl apply -f k8s/ --prune
-
+          # Apply Kubernetes configurations
+          for file in k8s/*.yaml; do
+            echo "Checking changes for $file..."
+            kubectl diff -f "$file" > /dev/null
+            if [ $? -eq 0 ]; then
+              echo "No changes detected in $file, skipping apply."
+            else
+              echo "Changes detected in $file, applying..."
+              kubectl apply --server-side -f "$file"
+            fi
+          done
