@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          volumeMounts:
+            - name: email-storage
+              mountPath: {{ .Values.config.emailStoragePath }}
+          env:
+            - name: EMAIL_STORAGE_PATH
+              value: {{ .Values.config.emailStoragePath }}
+            - name: MAX_EMAILS_PER_USER
+              value: {{ .Values.config.maxEmailsPerUser | quote }}
+            - name: MAX_EMAIL_SIZE
+              value: {{ .Values.config.maxEmailSize | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: email-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-storage 

@@ -44,6 +44,11 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
       - name: Set up kubeconfig
         run: |
           mkdir -p ~/.kube
@@ -55,28 +60,11 @@ jobs:
           kubectl cluster-info
           kubectl get nodes
 
-      - name: Update image in deployment manifest
+      - name: Deploy with Helm
         run: |
-          export REGISTRY_URL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          export IMAGE_TAG=${{ github.sha }}
-
-          # Replace variables in all Kubernetes files
-          for file in k8s/*.yaml; do
-            envsubst < $file > ${file}.updated
-            mv ${file}.updated $file
-          done
-
-      - name: Apply k8s manifests
-        run: |
-          export KUBECONFIG=~/.kube/config
-          # Apply Kubernetes configurations
-          for file in k8s/*.yaml; do
-            echo "Checking changes for $file..."
-            kubectl diff -f "$file" > /dev/null
-            if [ $? -eq 0 ]; then
-              echo "No changes detected in $file, skipping apply."
-            else
-              echo "Changes detected in $file, applying..."
-              kubectl apply --server-side -f "$file"
-            fi
-          done
+          # Deploy or upgrade the application using Helm
+          helm upgrade --install discord-mail ./discord-mail \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ github.sha }} \
+            --wait \
+            --timeout=300s
