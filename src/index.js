@@ -1,9 +1,17 @@
 require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
+
 const { SMTPServer } = require('smtp-server');
 const { WebhookClient } = require('discord.js');
 const { simpleParser } = require('mailparser');
 const EmailStorage = require('./email-storage');
 const WebServer = require('./web-server');
+
+// Validate required environment variables
+if (!process.env.DISCORD_WEBHOOK_URL) {
+    console.error('Error: DISCORD_WEBHOOK_URL environment variable is required');
+    process.exit(1);
+}
 
 // Initialize Discord webhook
 const webhookClient = new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL });
