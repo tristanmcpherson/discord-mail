@@ -104,20 +104,51 @@ const server = new SMTPServer({
                     // Extract Steam Guard code
                     const steamCode = extractSteamCode(parsed.text);
                     
-                    // Format message for Discord
-                    let discordMessage = `New email from: ${parsed.from?.text}\nSubject: ${parsed.subject}`;
-                    
+                    // Create Discord embed
+                    const embed = {
+                        title: '📧 New Email Received',
+                        color: 0x1B2838, // Steam blue color
+                        fields: [
+                            {
+                                name: '📤 From',
+                                value: fromText || 'Unknown',
+                                inline: true
+                            },
+                            {
+                                name: '📋 Subject',
+                                value: parsed.subject || 'No Subject',
+                                inline: true
+                            }
+                        ],
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: 'Discord Mail Server',
+                            icon_url: 'https://store.steampowered.com/favicon.ico'
+                        }
+                    };
+
+                    // Add Steam Guard code field if found
                     if (steamCode) {
-                        discordMessage += `\n\nSteam Guard Code: **${steamCode}**`;
+                        embed.fields.push({
+                            name: '🔑 Steam Guard Code',
+                            value: `\`\`\`${steamCode}\`\`\``,
+                            inline: false
+                        });
+                        embed.color = 0x4CAF50; // Green for Steam Guard codes
                     }
-                    
-                    discordMessage += `\n\nView full email: ${viewUrl}`;
+
+                    // Add view email button
+                    embed.fields.push({
+                        name: '🔗 Actions',
+                        value: `[View Full Email](${viewUrl})`,
+                        inline: false
+                    });
                     
                     // Send to Discord
                     await webhookClient.send({
-                        content: discordMessage,
                         username: 'Steam Guard',
-                        avatarURL: 'https://store.steampowered.com/favicon.ico'
+                        avatarURL: 'https://store.steampowered.com/favicon.ico',
+                        embeds: [embed]
                     });
                     console.log('Successfully sent code to Discord');
                 } else {
