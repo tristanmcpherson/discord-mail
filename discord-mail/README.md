@@ -21,7 +21,8 @@ helm install discord-mail ./discord-mail
 ```bash
 helm install discord-mail ./discord-mail \
   --set image.tag=v1.0.0 \
-  --set ingress.hosts[0].host=your-domain.com
+  --set ingress.hosts[0].host=your-domain.com \
+  --set secrets.discordWebhookUrl="your-discord-webhook-url"
 ```
 
 ### Upgrade an existing release
@@ -55,6 +56,11 @@ The following table lists the configurable parameters and their default values:
 | `config.emailStoragePath` | Email storage path | `/app/email-storage` |
 | `config.maxEmailsPerUser` | Max emails per user | `100` |
 | `config.maxEmailSize` | Max email size in bytes | `10485760` |
+| `config.smtpPort` | SMTP server port | `2525` |
+| `config.smtpHost` | SMTP server host | `0.0.0.0` |
+| `config.baseUrl` | Base URL for email viewing | `https://mail.raegous.com` |
+| `config.tls.enabled` | Enable TLS for SMTP | `false` |
+| `secrets.discordWebhookUrl` | Discord webhook URL | `""` |
 
 ## Uninstalling
 

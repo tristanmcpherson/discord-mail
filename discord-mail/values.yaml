@@ -36,4 +36,9 @@ resources:
 config:
   emailStoragePath: "/app/email-storage"
   maxEmailsPerUser: 100
-  maxEmailSize: 10485760  # 10MB in bytes 
+  maxEmailSize: 10485760  # 10MB in bytes
+  smtpPort: 2525
+  smtpHost: "0.0.0.0"
+  baseUrl: "https://mail.raegous.com"
+  tls:
+    enabled: true  # Set to true if you want to enable TLS

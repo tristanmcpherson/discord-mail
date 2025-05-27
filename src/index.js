@@ -28,16 +28,32 @@ const filterRules = {
     maxSize: 10 * 1024 * 1024, // 10MB
 };
 
+// Create SMTP server configuration
+const smtpConfig = {
+    secure: false, // Disable TLS by default for simplicity
+    authOptional: true, // Make authentication optional
+    hideSTARTTLS: true, // Hide STARTTLS for now
+    banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
+};
+
+// Add TLS configuration if certificates are provided
+if (process.env.TLS_KEY_PATH && process.env.TLS_CERT_PATH) {
+    try {
+        smtpConfig.secure = true;
+        smtpConfig.hideSTARTTLS = false;
+        smtpConfig.tls = {
+            key: fs.readFileSync(process.env.TLS_KEY_PATH),
+            cert: fs.readFileSync(process.env.TLS_CERT_PATH)
+        };
+        console.log('TLS certificates loaded successfully');
+    } catch (error) {
+        console.warn('Failed to load TLS certificates, running without TLS:', error.message);
+    }
+}
+
 // Create SMTP server
 const server = new SMTPServer({
-    secure: true, // Enable TLS
-    authOptional: true, // Require authentication
-    hideSTARTTLS: false, // Allow STARTTLS
-    banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
-    tls: {
-        key: fs.readFileSync(process.env.TLS_KEY_PATH),
-        cert: fs.readFileSync(process.env.TLS_CERT_PATH)
-    },
+    ...smtpConfig,
     onConnect(session, callback) {
         // Log connection for debugging
         console.log(`New connection from ${session.remoteAddress}`);

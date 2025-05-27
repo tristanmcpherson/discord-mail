@@ -30,9 +30,20 @@ spec:
               value: {{ .Values.config.maxEmailsPerUser | quote }}
             - name: MAX_EMAIL_SIZE
               value: {{ .Values.config.maxEmailSize | quote }}
-          envFrom:
-            - secretRef:
-                name: {{ .Release.Name }}-secret
+            - name: SMTP_PORT
+              value: {{ .Values.config.smtpPort | default "2525" | quote }}
+            - name: SMTP_HOST
+              value: {{ .Values.config.smtpHost | default "0.0.0.0" | quote }}
+            - name: WEB_PORT
+              value: {{ .Values.service.port | quote }}
+            - name: BASE_URL
+              value: {{ .Values.config.baseUrl | quote }}
+            {{- if .Values.config.tls.enabled }}
+            - name: TLS_KEY_PATH
+              value: "/etc/tls/tls.key"
+            - name: TLS_CERT_PATH
+              value: "/etc/tls/tls.crt"
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
