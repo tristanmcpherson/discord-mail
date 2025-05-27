@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import { SMTPServer, SMTPServerSession, SMTPServerAddress } from 'smtp-server';
+import { SMTPServer, SMTPServerSession, SMTPServerAddress, SMTPServerOptions } from 'smtp-server';
 import { WebhookClient } from 'discord.js';
 import { simpleParser, ParsedMail } from 'mailparser';
 import EmailStorage from './email-storage';
@@ -36,22 +36,9 @@ const filterRules: FilterRules = {
     maxSize: 10 * 1024 * 1024, // 10MB
 };
 
-// Create SMTP server configuration
-interface SMTPConfig {
-    secure: boolean;
-    authOptional: boolean;
-    hideSTARTTLS: boolean;
-    banner: string;
-    tls?: {
-        key: Buffer;
-        cert: Buffer;
-    };
-}
-
-const smtpConfig: SMTPConfig = {
-    secure: false, // Disable TLS by default for simplicity
+const smtpConfig: SMTPServerOptions = {
+    secure: true, // Disable TLS by default for simplicity
     authOptional: true, // Make authentication optional
-    hideSTARTTLS: true, // Hide STARTTLS for now
     banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
 };
 
@@ -60,10 +47,8 @@ if (process.env.TLS_KEY_PATH && process.env.TLS_CERT_PATH) {
     try {
         smtpConfig.secure = true;
         smtpConfig.hideSTARTTLS = false;
-        smtpConfig.tls = {
-            key: fs.readFileSync(process.env.TLS_KEY_PATH),
-            cert: fs.readFileSync(process.env.TLS_CERT_PATH)
-        };
+        smtpConfig.key = fs.readFileSync(process.env.TLS_KEY_PATH);
+        smtpConfig.cert = fs.readFileSync(process.env.TLS_CERT_PATH);
         console.log('TLS certificates loaded successfully');
     } catch (error: any) {
         console.warn('Failed to load TLS certificates, running without TLS:', error.message);
