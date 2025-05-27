@@ -200,17 +200,21 @@ function shouldForwardEmail(email: ParsedMail): boolean {
 function extractSteamCode(text?: string): string | null {
     if (!text) return null;
     
-    // Look for Steam Guard code pattern
-    const codeMatch = text.match(/Steam Guard code:?\s*([A-Z0-9]{5})/i);
-    if (codeMatch && codeMatch[1]) {
-        return codeMatch[1];
+    // Array of regex patterns to try for extracting Steam Guard codes
+    const patterns = [
+        /Steam Guard code:?\s*([A-Z0-9]{5})/i,
+        /\n([A-Z0-9]{5})/,
+        /\s([A-Z0-9]{5})/
+    ];
+
+    // Try each pattern until we find a match
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
     }
 
-    const secondMatch = text.match(/\n([A-Z0-9]{5})/);
-    if (secondMatch && secondMatch[1]) {
-        return secondMatch[1];
-    }
-    
     return null;
 }
 
