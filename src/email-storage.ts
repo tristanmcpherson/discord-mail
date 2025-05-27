@@ -1,18 +1,51 @@
-const fs = require('fs').promises;
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const diskusage = require('diskusage');
+import { promises as fs } from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
+import diskusage from 'diskusage';
+import { ParsedMail } from 'mailparser';
+
+interface EmailMetadata {
+  from?: string;
+  subject?: string;
+  date?: Date;
+  [key: string]: any;
+}
+
+interface StoredEmail {
+  id: string;
+  authToken: string;
+  storedAt: string;
+  metadata: EmailMetadata;
+  content: ParsedMail;
+}
+
+interface EmailStoreResult {
+  emailId: string;
+  authToken: string;
+}
+
+interface FileStats {
+  file: string;
+  filePath: string;
+  mtime: Date;
+  size: number;
+}
 
 class EmailStorage {
-  constructor(storageDir = path.join(__dirname, '..', 'email-storage')) {
+  private readonly storageDir: string;
+  private readonly minDiskSpace: number;
+  private readonly maxStorageSize: number;
+  private readonly maxEmailAge: number;
+
+  constructor(storageDir: string = path.join(__dirname, '..', 'email-storage')) {
     this.storageDir = storageDir;
     this.minDiskSpace = 500 * 1024 * 1024; // 500MB minimum free space
     this.maxStorageSize = 5 * 1024 * 1024 * 1024; // 5GB total storage limit
     this.maxEmailAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   }
 
-  async initialize() {
+  async initialize(): Promise<boolean> {
     try {
       await fs.mkdir(this.storageDir, { recursive: true });
       return true;
@@ -22,7 +55,7 @@ class EmailStorage {
     }
   }
 
-  async storeEmail(emailContent, metadata = {}) {
+  async storeEmail(emailContent: ParsedMail, metadata: EmailMetadata = {}): Promise<EmailStoreResult> {
     // Check if we have enough disk space
     if (!await this.ensureDiskSpace()) {
       throw new Error('Insufficient disk space for storing email');
@@ -34,7 +67,7 @@ class EmailStorage {
     const emailId = uuidv4();
     const authToken = crypto.randomBytes(16).toString('hex');
     
-    const storageObject = {
+    const storageObject: StoredEmail = {
       id: emailId,
       authToken,
       storedAt: new Date().toISOString(),
@@ -53,19 +86,19 @@ class EmailStorage {
     }
   }
 
-  async retrieveEmail(emailId, authToken) {
+  async retrieveEmail(emailId: string, authToken: string): Promise<StoredEmail> {
     const emailPath = path.join(this.storageDir, `${emailId}.json`);
     
     try {
       const fileContent = await fs.readFile(emailPath, 'utf8');
-      const emailData = JSON.parse(fileContent);
+      const emailData: StoredEmail = JSON.parse(fileContent);
       
       if (emailData.authToken !== authToken) {
         throw new Error('Invalid authentication token');
       }
       
       return emailData;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'ENOENT') {
         throw new Error('Email not found');
       }
@@ -73,7 +106,7 @@ class EmailStorage {
     }
   }
 
-  async cleanupOldEmails() {
+  async cleanupOldEmails(): Promise<void> {
     try {
       const files = await fs.readdir(this.storageDir);
       const now = new Date();
@@ -84,10 +117,10 @@ class EmailStorage {
         const filePath = path.join(this.storageDir, file);
         const stats = await fs.stat(filePath);
         const fileContent = await fs.readFile(filePath, 'utf8');
-        const emailData = JSON.parse(fileContent);
+        const emailData: StoredEmail = JSON.parse(fileContent);
         const storedAt = new Date(emailData.storedAt);
         
-        if (now - storedAt > this.maxEmailAge) {
+        if (now.getTime() - storedAt.getTime() > this.maxEmailAge) {
           await fs.unlink(filePath);
         }
       }
@@ -102,10 +135,10 @@ class EmailStorage {
     }
   }
 
-  async removeOldestEmails() {
+  async removeOldestEmails(): Promise<void> {
     try {
       const files = await fs.readdir(this.storageDir);
-      const fileStats = [];
+      const fileStats: FileStats[] = [];
       
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
@@ -116,15 +149,15 @@ class EmailStorage {
       }
       
       // Sort by modification time (oldest first)
-      fileStats.sort((a, b) => a.mtime - b.mtime);
+      fileStats.sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
       
       let totalSize = fileStats.reduce((sum, file) => sum + file.size, 0);
       let i = 0;
       
       // Remove oldest files until we're under the limit
       while (totalSize > this.maxStorageSize && i < fileStats.length) {
-        await fs.unlink(fileStats[i].filePath);
-        totalSize -= fileStats[i].size;
+        await fs.unlink(fileStats[i]!.filePath);
+        totalSize -= fileStats[i]!.size;
         i++;
       }
     } catch (error) {
@@ -132,7 +165,7 @@ class EmailStorage {
     }
   }
 
-  async getTotalStorageSize() {
+  async getTotalStorageSize(): Promise<number> {
     try {
       const files = await fs.readdir(this.storageDir);
       let totalSize = 0;
@@ -152,7 +185,7 @@ class EmailStorage {
     }
   }
 
-  async ensureDiskSpace() {
+  async ensureDiskSpace(): Promise<boolean> {
     try {
       const { available } = await diskusage.check(path.parse(this.storageDir).root);
       return available > this.minDiskSpace;
@@ -163,4 +196,4 @@ class EmailStorage {
   }
 }
 
-module.exports = EmailStorage;
+export default EmailStorage; 

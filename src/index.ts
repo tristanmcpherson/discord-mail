@@ -1,13 +1,15 @@
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
-require('dotenv').config({ path: '.env.local' });
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import { SMTPServer, SMTPServerSession, SMTPServerAddress } from 'smtp-server';
+import { WebhookClient } from 'discord.js';
+import { simpleParser, ParsedMail } from 'mailparser';
+import EmailStorage from './email-storage';
+import WebServer from './web-server';
 
-const { SMTPServer } = require('smtp-server');
-const { WebhookClient } = require('discord.js');
-const { simpleParser } = require('mailparser');
-const EmailStorage = require('./email-storage');
-const WebServer = require('./web-server');
+// Load environment variables
+dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 // Validate required environment variables
 if (!process.env.DISCORD_WEBHOOK_URL) {
@@ -21,7 +23,13 @@ const emailStorage = new EmailStorage();
 const webServer = new WebServer(emailStorage);
 
 // Email filtering rules
-const filterRules = {
+interface FilterRules {
+    allowedDomains: string[];
+    blockedKeywords: string[];
+    maxSize: number;
+}
+
+const filterRules: FilterRules = {
     // Add your filtering rules here
     allowedDomains: ['steampowered.com', 'gmail.com'],
     blockedKeywords: ['spam', 'unwanted'],
@@ -29,7 +37,18 @@ const filterRules = {
 };
 
 // Create SMTP server configuration
-const smtpConfig = {
+interface SMTPConfig {
+    secure: boolean;
+    authOptional: boolean;
+    hideSTARTTLS: boolean;
+    banner: string;
+    tls?: {
+        key: Buffer;
+        cert: Buffer;
+    };
+}
+
+const smtpConfig: SMTPConfig = {
     secure: false, // Disable TLS by default for simplicity
     authOptional: true, // Make authentication optional
     hideSTARTTLS: true, // Hide STARTTLS for now
@@ -46,7 +65,7 @@ if (process.env.TLS_KEY_PATH && process.env.TLS_CERT_PATH) {
             cert: fs.readFileSync(process.env.TLS_CERT_PATH)
         };
         console.log('TLS certificates loaded successfully');
-    } catch (error) {
+    } catch (error: any) {
         console.warn('Failed to load TLS certificates, running without TLS:', error.message);
     }
 }
@@ -54,33 +73,35 @@ if (process.env.TLS_KEY_PATH && process.env.TLS_CERT_PATH) {
 // Create SMTP server
 const server = new SMTPServer({
     ...smtpConfig,
-    onConnect(session, callback) {
+    onConnect(session: SMTPServerSession, callback: (err?: Error) => void) {
         // Log connection for debugging
         console.log(`New connection from ${session.remoteAddress}`);
         callback();
     },
-    onMailFrom(address, session, callback) {
+    onMailFrom(address: SMTPServerAddress, session: SMTPServerSession, callback: (err?: Error) => void) {
         // Validate sender domain
         const senderDomain = address.address.split('@')[1];
-        if (!filterRules.allowedDomains.includes(senderDomain)) {
+        if (senderDomain && !filterRules.allowedDomains.includes(senderDomain)) {
             return callback(new Error('Sender domain not allowed'));
         }
         callback();
     },
-    onRcptTo(address, session, callback) {
+    onRcptTo(address: SMTPServerAddress, session: SMTPServerSession, callback: (err?: Error) => void) {
         // Allow any recipient since we're just receiving
         callback();
     },
-    onData(stream, session, callback) {
+    onData(stream: NodeJS.ReadableStream, session: SMTPServerSession, callback: (err?: Error) => void) {
         let mailData = '';
-        stream.on('data', (chunk) => {
-            mailData += chunk;
+        stream.on('data', (chunk: Buffer) => {
+            mailData += chunk.toString();
         });
 
         stream.on('end', async () => {
             try {
                 const parsed = await simpleParser(mailData);
-                console.log(`Received email from ${parsed.from.text} to ${parsed.to.text}`);
+                const fromText = Array.isArray(parsed.from) ? parsed.from[0]?.text : parsed.from?.text;
+                const toText = Array.isArray(parsed.to) ? parsed.to[0]?.text : parsed.to?.text;
+                console.log(`Received email from ${fromText} to ${toText}`);
                 
                 // Apply filtering rules
                 if (shouldForwardEmail(parsed)) {
@@ -119,7 +140,7 @@ const server = new SMTPServer({
                 }
 
                 callback();
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Error processing email:', err);
                 callback(new Error('Error processing email'));
             }
@@ -128,24 +149,31 @@ const server = new SMTPServer({
 });
 
 // Email filtering function
-function shouldForwardEmail(email) {
+function shouldForwardEmail(email: ParsedMail): boolean {
     // Check domain
-    const fromDomain = email.from.value[0].address.split('@')[1];
-    if (!filterRules.allowedDomains.includes(fromDomain)) {
+    const fromAddress = email.from?.value?.[0]?.address;
+    if (!fromAddress) {
+        console.log('Email has no from address');
+        return false;
+    }
+    
+    const fromDomain = fromAddress.split('@')[1];
+    if (fromDomain && !filterRules.allowedDomains.includes(fromDomain)) {
         console.log(`Email from domain ${fromDomain} not in allowed list`);
         return false;
     }
 
     // Check for blocked keywords
-    const subject = email.subject.toLowerCase();
+    const subject = (email.subject || '').toLowerCase();
     if (filterRules.blockedKeywords.some(keyword => subject.includes(keyword))) {
         console.log(`Email contains blocked keyword in subject: ${subject}`);
         return false;
     }
 
-    // Check size
-    if (email.size > filterRules.maxSize) {
-        console.log(`Email size ${email.size} exceeds maximum allowed size`);
+    // Check size (approximate)
+    const emailSize = (email.text || '').length + (email.html || '').length;
+    if (emailSize > filterRules.maxSize) {
+        console.log(`Email size ${emailSize} exceeds maximum allowed size`);
         return false;
     }
 
@@ -153,12 +181,12 @@ function shouldForwardEmail(email) {
 }
 
 // Extract Steam Guard code from email text
-function extractSteamCode(text) {
+function extractSteamCode(text?: string): string | null {
     if (!text) return null;
     
     // Look for Steam Guard code pattern
     const codeMatch = text.match(/Steam Guard code:?\s*([A-Z0-9]{5})/i);
-    if (codeMatch) {
+    if (codeMatch && codeMatch[1]) {
         return codeMatch[1];
     }
     
@@ -166,7 +194,7 @@ function extractSteamCode(text) {
 }
 
 // Initialize and start servers
-async function startServers() {
+async function startServers(): Promise<void> {
     try {
         // Initialize email storage
         await emailStorage.initialize();
@@ -177,7 +205,7 @@ async function startServers() {
         console.log('Web server started');
 
         // Start SMTP server
-        const smtpPort = process.env.SMTP_PORT || 2525;
+        const smtpPort = parseInt(process.env.SMTP_PORT || '2525', 10);
         const smtpHost = process.env.SMTP_HOST || '0.0.0.0';
         server.listen(smtpPort, smtpHost, () => {
             console.log(`SMTP server running on ${smtpHost}:${smtpPort}`);
@@ -211,7 +239,7 @@ process.on('SIGINT', async () => {
 startServers();
 
 // Export functions for testing
-module.exports = {
+export {
     extractSteamCode,
     shouldForwardEmail
-};
+}; 

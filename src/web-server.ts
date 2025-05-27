@@ -1,20 +1,33 @@
-const express = require('express');
-const path = require('path');
-const EmailStorage = require('./email-storage');
+import express, { Express, Request, Response } from 'express';
+import path from 'path';
+import { Server } from 'http';
+import EmailStorage from './email-storage';
+
+interface EmailViewParams {
+  emailId: string;
+}
+
+interface EmailViewQuery {
+  token?: string;
+}
 
 class WebServer {
-  constructor(emailStorage) {
+  private app: Express;
+  private emailStorage: EmailStorage;
+  private server?: Server;
+
+  constructor(emailStorage: EmailStorage) {
     this.app = express();
     this.emailStorage = emailStorage;
     this.setupRoutes();
   }
 
-  setupRoutes() {
+  private setupRoutes(): void {
     // Serve static files from the public directory
     this.app.use(express.static(path.join(__dirname, '..', 'public')));
 
     // View email endpoint
-    this.app.get('/view-email/:emailId', async (req, res) => {
+    this.app.get('/view-email/:emailId', async (req: Request<EmailViewParams, any, any, EmailViewQuery>, res: Response) => {
       try {
         const { emailId } = req.params;
         const { token } = req.query;
@@ -67,7 +80,7 @@ class WebServer {
                   <h2>${emailData.metadata.subject || 'No Subject'}</h2>
                   <div class="email-meta">
                     <p><strong>From:</strong> ${emailData.metadata.from || 'Unknown'}</p>
-                    <p><strong>Date:</strong> ${new Date(emailData.metadata.date).toLocaleString()}</p>
+                    <p><strong>Date:</strong> ${new Date(emailData.metadata.date || '').toLocaleString()}</p>
                   </div>
                 </div>
                 <div class="email-content">
@@ -77,7 +90,7 @@ class WebServer {
             </body>
           </html>
         `);
-      } catch (error) {
+      } catch (error: any) {
         if (error.message === 'Email not found') {
           res.status(404).json({ error: 'Email not found' });
         } else if (error.message === 'Invalid authentication token') {
@@ -90,12 +103,12 @@ class WebServer {
     });
 
     // Health check endpoint
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (req: Request, res: Response) => {
       res.json({ status: 'ok' });
     });
   }
 
-  start(port = process.env.WEB_PORT || 3000) {
+  start(port: number = parseInt(process.env.WEB_PORT || '3000', 10)): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(port, () => {
@@ -108,7 +121,7 @@ class WebServer {
     });
   }
 
-  stop() {
+  stop(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.server) {
         this.server.close((error) => {
@@ -125,4 +138,4 @@ class WebServer {
   }
 }
 
-module.exports = WebServer; 
+export default WebServer; 

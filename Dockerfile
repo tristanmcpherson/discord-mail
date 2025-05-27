@@ -19,6 +19,9 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Build TypeScript
+RUN npm run build
+
 # Production stage
 FROM node:18-alpine
 
@@ -43,4 +46,4 @@ USER appuser
 EXPOSE 2525 3000
 
 # Start the application
-CMD ["node", "src/index.js"] 
+CMD ["node", "dist/index.js"] 

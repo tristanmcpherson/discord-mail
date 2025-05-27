@@ -2,11 +2,13 @@
   "name": "discord-mail",
   "version": "1.0.0",
   "description": "Mail server that forwards filtered emails to Discord",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "jest",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
@@ -19,14 +21,24 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.19",
+    "@types/supertest": "^6.0.2",
+    "@types/uuid": "^9.0.8",
+    "@types/mailparser": "^3.4.4",
     "jest": "^29.7.0",
     "nodemon": "^3.0.3",
-    "supertest": "^6.3.4"
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   },
   "jest": {
-    "setupFiles": ["<rootDir>/src/__tests__/setup.js"],
+    "preset": "ts-jest",
+    "setupFiles": ["<rootDir>/src/__tests__/setup.ts"],
     "testEnvironment": "node",
-    "testMatch": ["**/__tests__/**/*.test.js"],
+    "testMatch": ["**/__tests__/**/*.test.ts"],
     "collectCoverage": true,
     "coverageDirectory": "coverage",
     "coverageReporters": ["text", "lcov"]

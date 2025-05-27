@@ -3,7 +3,20 @@ node_modules/
 .env.example
 .env.local
 .env.production
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
 .env.development
 .env.test
 .env.staging
-.env.production
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
