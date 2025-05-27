@@ -45,7 +45,7 @@ const smtpConfig: SMTPServerOptions = {
 // Add TLS configuration if certificates are provided
 if (process.env.TLS_KEY_PATH && process.env.TLS_CERT_PATH) {
     try {
-        smtpConfig.secure = true;
+        smtpConfig.secure = false;
         smtpConfig.hideSTARTTLS = false;
         smtpConfig.key = fs.readFileSync(process.env.TLS_KEY_PATH);
         smtpConfig.cert = fs.readFileSync(process.env.TLS_CERT_PATH);
