@@ -23,6 +23,11 @@ spec:
           volumeMounts:
             - name: email-storage
               mountPath: {{ .Values.config.emailStoragePath }}
+            {{- if .Values.config.tls.enabled }}
+            - name: tls-certs
+              mountPath: /etc/tls
+              readOnly: true
+            {{- end }}
           env:
             - name: EMAIL_STORAGE_PATH
               value: {{ .Values.config.emailStoragePath }}
@@ -52,4 +57,9 @@ spec:
       volumes:
         - name: email-storage
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-storage 
+            claimName: {{ .Release.Name }}-storage
+        {{- if .Values.config.tls.enabled }}
+        - name: tls-certs
+          secret:
+            secretName: {{ .Values.config.tls.secretName }}
+        {{- end }} 

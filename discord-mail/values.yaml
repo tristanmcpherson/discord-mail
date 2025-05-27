@@ -20,6 +20,10 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+  tls:
+    - hosts:
+        - mail.raegous.com
+      secretName: discord-mail-tls
 
 persistence:
   enabled: true
@@ -42,3 +46,4 @@ config:
   baseUrl: "https://mail.raegous.com"
   tls:
     enabled: true  # Set to true if you want to enable TLS
+    secretName: "discord-mail-tls"  # Name of the TLS secret created by cert-manager
