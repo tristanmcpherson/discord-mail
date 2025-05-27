@@ -33,7 +33,8 @@ class WebServer {
         const { token } = req.query;
 
         if (!token) {
-          return res.status(401).json({ error: 'Authentication token required' });
+          res.status(401).json({ error: 'Authentication token required' });
+          return;
         }
 
         const emailData = await this.emailStorage.retrieveEmail(emailId, token);
