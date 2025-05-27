@@ -12,7 +12,7 @@ spec:
       targetPort: {{ .Values.service.ports.smtp.targetPort }}
       protocol: {{ .Values.service.ports.smtp.protocol }}
     - name: http
-      port: {{ .Values.service.httpPort }}
+      port: 80
       targetPort: {{ .Values.service.httpPort }}
       protocol: TCP
   selector:
