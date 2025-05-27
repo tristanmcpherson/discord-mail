@@ -19,7 +19,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.port }}
+            - containerPort: {{ .Values.service.httpPort }}
+              name: http
+            - containerPort: {{ .Values.service.ports.smtp.targetPort }}
+              name: smtp
           volumeMounts:
             - name: email-storage
               mountPath: {{ .Values.config.emailStoragePath }}
@@ -40,7 +43,7 @@ spec:
             - name: SMTP_HOST
               value: {{ .Values.config.smtpHost | default "0.0.0.0" | quote }}
             - name: WEB_PORT
-              value: {{ .Values.service.port | quote }}
+              value: {{ .Values.service.httpPort | quote }}
             - name: BASE_URL
               value: {{ .Values.config.baseUrl | quote }}
             {{- if .Values.config.tls.enabled }}

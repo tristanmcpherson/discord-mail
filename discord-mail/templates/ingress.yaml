@@ -21,7 +21,7 @@ spec:
               service:
                 name: {{ $.Release.Name }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  number: {{ $.Values.service.httpPort }}
           {{- end }}
     {{- end }}
   {{- if .Values.ingress.tls }}

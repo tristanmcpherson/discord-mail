@@ -7,8 +7,13 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}
+    - name: smtp
+      port: {{ .Values.service.ports.smtp.port }}
+      targetPort: {{ .Values.service.ports.smtp.targetPort }}
+      protocol: {{ .Values.service.ports.smtp.protocol }}
+    - name: http
+      port: {{ .Values.service.httpPort }}
+      targetPort: {{ .Values.service.httpPort }}
       protocol: TCP
   selector:
     app: {{ .Release.Name }} 

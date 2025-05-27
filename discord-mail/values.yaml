@@ -6,8 +6,14 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
-  port: 3000
+  type: LoadBalancer
+  ports:
+    smtp:
+      port: 25
+      targetPort: 2525
+      protocol: TCP
+  # HTTP port for internal cluster communication (used by ingress)
+  httpPort: 3000
 
 ingress:
   enabled: true
