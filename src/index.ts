@@ -39,7 +39,7 @@ const filterRules: FilterRules = {
 const smtpConfig: SMTPServerOptions = {
     secure: true, // Disable TLS by default for simplicity
     authOptional: true, // Make authentication optional
-    banner: process.env.SMTP_BANNER || 'ESMTP Discord Mail Server',
+    banner: process.env.SMTP_BANNER || '220 raegous.dev ESMTP Discord Mail Server',
 };
 
 // Add TLS configuration if certificates are provided
