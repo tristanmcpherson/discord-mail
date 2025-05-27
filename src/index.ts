@@ -67,6 +67,7 @@ const server = new SMTPServer({
         // Validate sender domain
         const senderDomain = address.address.split('@')[1];
         if (senderDomain && !filterRules.allowedDomains.includes(senderDomain)) {
+            console.log(`Sender domain ${senderDomain} not in allowed list`);
             return callback(new Error('Sender domain not allowed'));
         }
         callback();
