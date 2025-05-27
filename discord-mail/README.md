@@ -46,7 +46,7 @@ The following table lists the configurable parameters and their default values:
 | `service.port` | Service port | `3000` |
 | `ingress.enabled` | Enable ingress | `true` |
 | `ingress.className` | Ingress class name | `nginx` |
-| `ingress.hosts[0].host` | Hostname | `mail.raegous.com` |
+| `ingress.hosts[0].host` | Hostname | `mail.raegous.dev` |
 | `persistence.enabled` | Enable persistence | `true` |
 | `persistence.size` | Storage size | `5Gi` |
 | `resources.limits.cpu` | CPU limit | `500m` |
@@ -58,7 +58,7 @@ The following table lists the configurable parameters and their default values:
 | `config.maxEmailSize` | Max email size in bytes | `10485760` |
 | `config.smtpPort` | SMTP server port | `2525` |
 | `config.smtpHost` | SMTP server host | `0.0.0.0` |
-| `config.baseUrl` | Base URL for email viewing | `https://mail.raegous.com` |
+| `config.baseUrl` | Base URL for email viewing | `https://mail.raegous.dev` |
 | `config.tls.enabled` | Enable TLS for SMTP | `false` |
 | `secrets.discordWebhookUrl` | Discord webhook URL | `""` |
 
