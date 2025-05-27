@@ -174,6 +174,11 @@ function extractSteamCode(text?: string): string | null {
     if (codeMatch && codeMatch[1]) {
         return codeMatch[1];
     }
+
+    const secondMatch = text.match(/\n([A-Z0-9]{5})/);
+    if (secondMatch && secondMatch[1]) {
+        return secondMatch[1];
+    }
     
     return null;
 }
