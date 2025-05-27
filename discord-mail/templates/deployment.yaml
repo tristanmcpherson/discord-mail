@@ -30,6 +30,9 @@ spec:
               value: {{ .Values.config.maxEmailsPerUser | quote }}
             - name: MAX_EMAIL_SIZE
               value: {{ .Values.config.maxEmailSize | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-secret
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
