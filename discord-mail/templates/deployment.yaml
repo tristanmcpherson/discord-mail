@@ -44,6 +44,9 @@ spec:
             - name: TLS_CERT_PATH
               value: "/etc/tls/tls.crt"
             {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-secret
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
